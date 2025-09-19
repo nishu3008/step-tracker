@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .step-display {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(76, 175, 80, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .step-count {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-label {
+            font-size: 1.2rem;
+            color: #666;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-ring {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .progress-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: transparent;
+            stroke: #e6e6e6;
+            stroke-width: 8;
+        }
+
+        .progress-ring-progress {
+            fill: transparent;
+            stroke: #4CAF50;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 628;
+            stroke-dashoffset: 628;
+            transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+            margin: 10px 5px;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn.secondary:hover {
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .input-group input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            width: 100px;
+            text-align: center;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .history {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .history h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+            
+            .step-count {
+                font-size: 3rem;
+            }
+            
+            .progress-ring {
+                width: 150px;
+                height: 150px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👟 Step Tracker</h1>
+            <p>Track your daily steps and stay active!</p>
+        </div>
+
+        <div class="main-content">
+            <div class="step-display">
+                <div class="step-count" id="stepCount">0</div>
+                <div class="step-label">Steps Today</div>
+                
+                <div class="progress-ring">
+                    <svg>
+                        <circle class="progress-ring-circle" cx="100" cy="100" r="90"></circle>
+                        <circle class="progress-ring-progress" cx="100" cy="100" r="90" id="progressCircle"></circle>
+                    </svg>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-card">
+                    <h3>Auto Tracking</h3>
+                    <div id="sensorStatus" class="status info">Checking device support...</div>
+                    <button id="startAutoBtn" class="btn">Start Auto Tracking</button>
+                    <button id="stopAutoBtn" class="btn secondary" style="display: none;">Stop Tracking</button>
+                </div>
+
+                <div class="control-card">
+                    <h3>Manual Entry</h3>
+                    <div class="input-group">
+                        <input type="number" id="manualSteps" placeholder="Steps" min="0">
+                        <button onclick="addManualSteps()" class="btn">Add Steps</button>
+                    </div>
+                    <button onclick="resetSteps()" class="btn secondary">Reset Today</button>
+                </div>
+
+                <div class="control-card">
+                    <h3>Daily Goal</h3>
+                    <div class="input-group">
+                        <input type="number" id="goalInput" placeholder="10000" min="1000" max="50000">
+                        <button onclick="setGoal()" class="btn">Set Goal</button>
+                    </div>
+                    <div>Current: <span id="currentGoal">10000</span> steps</div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="caloriesBurned">0</div>
+                    <div class="stat-label">Calories Burned</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="distanceWalked">0</div>
+                    <div class="stat-label">Distance (km)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeMinutes">0</div>
+                    <div class="stat-label">Active Minutes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="weeklyAverage">0</div>
+                    <div class="stat-label">Weekly Average</div>
+                </div>
+            </div>
+
+            <div class="history">
+                <h3>📊 Recent History</h3>
+                <div id="historyContainer">
+                    <div style="text-align: center; color: #999; padding: 20px;">
+                        Start tracking to see your history here!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentSteps = 0;
+        let dailyGoal = 10000;
+        let isAutoTracking = false;
+        let stepHistory = [];
+        let lastAcceleration = null;
+        let stepThreshold = 15;
+        let stepBuffer = [];
+
+        // DOM elements
+        const stepCount = document.getElementById('stepCount');
+        const progressCircle = document.getElementById('progressCircle');
+        const progressText = document.getElementById('progressText');
+        const sensorStatus = document.getElementById('sensorStatus');
+        const startAutoBtn = document.getElementById('startAutoBtn');
+        const stopAutoBtn = document.getElementById('stopAutoBtn');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateDisplay();
+            checkSensorSupport();
+            updateHistory();
+        });
+
+        // Check if device supports motion sensors
+        function checkSensorSupport() {
+            if ('DeviceMotionEvent' in window) {
+                sensorStatus.innerHTML = '✅ Motion sensors available';
+                sensorStatus.className = 'status success';
+                
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    sensorStatus.innerHTML = '📱 Tap "Start" to request motion permission';
+                    sensorStatus.className = 'status info';
+                }
+            } else {
+                sensorStatus.innerHTML = '❌ Motion sensors not available - use manual entry';
+                sensorStatus.className = 'status error';
+                startAutoBtn.style.display = 'none';
+            }
+        }
+
+        // Start automatic step tracking
+        async function startAutoTracking() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceMotionEvent.requestPermission();
+                    if (permission !== 'granted') {
+                        sensorStatus.innerHTML = '❌ Motion permission denied';
+                        sensorStatus.className = 'status error';
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Permission request failed:', error);
+                    sensorStatus.innerHTML = '❌ Permission request failed';
+                    sensorStatus.className = 'status error';
+                    return;
+                }
+            }
+
+            isAutoTracking = true;
+            startAutoBtn.style.display = 'none';
+            stopAutoBtn.style.display = 'inline-block';
+            sensorStatus.innerHTML = '🚶‍♂️ Tracking your steps...';
+            sensorStatus.className = 'status success';
+
+            window.addEventListener('devicemotion', handleMotion);
+        }
+
+        // Stop automatic tracking
+        function stopAutoTracking() {
+            isAutoTracking = false;
+            startAutoBtn.style.display = 'inline-block';
+            stopAutoBtn.style.display = 'none';
+            sensorStatus.innerHTML = '⏸️ Tracking stopped';
+            sensorStatus.className = 'status info';
+
+            window.removeEventListener('devicemotion', handleMotion);
+        }
+
+        // Handle device motion for step detection
+        function handleMotion(event) {
+            if (!isAutoTracking) return;
+
+            const acceleration = event.accelerationIncludingGravity;
+            if (!acceleration) return;
+
+            const totalAcceleration = Math.sqrt(
+                Math.pow(acceleration.x || 0, 2) +
+                Math.pow(acceleration.y || 0, 2) +
+                Math.pow(acceleration.z || 0, 2)
+            );
+
+            if (lastAcceleration !== null) {
+                const deltaAcceleration = Math.abs(totalAcceleration - lastAcceleration);
+                
+                stepBuffer.push(deltaAcceleration);
+                if (stepBuffer.length > 10) {
+                    stepBuffer.shift();
+                }
+
+                if (deltaAcceleration > stepThreshold && stepBuffer.length >= 5) {
+                    const avgAcceleration = stepBuffer.reduce((a, b) => a + b, 0) / stepBuffer.length;
+                    if (deltaAcceleration > avgAcceleration * 1.5) {
+                        addStep();
+                        stepBuffer = [];
+                    }
+                }
+            }
+
+            lastAcceleration = totalAcceleration;
+        }
+
+        function addStep() {
+            currentSteps++;
+            updateDisplay();
+            saveData();
+        }
+
+        function addManualSteps() {
+            const input = document.getElementById('manualSteps');
+            const steps = parseInt(input.value);
+            
+            if (steps && steps > 0) {
+                currentSteps += steps;
+                updateDisplay();
+                saveData();
+                input.value = '';
+                
+                const status = document.createElement('div');
+                status.className = 'status success';
+                status.innerHTML = `✅ Added ${steps} steps!`;
+                input.parentNode.appendChild(status);
+                setTimeout(() => status.remove(), 3000);
+            }
+        }
+
+        function resetSteps() {
+            if (confirm('Are you sure you want to reset today\'s steps?')) {
+                if (currentSteps > 0) {
+                    addToHistory();
+                }
+                currentSteps = 0;
+                updateDisplay();
+                saveData();
+            }
+        }
+
+        function setGoal() {
+            const input = document.getElementById('goalInput');
+            const goal = parseInt(input.value);
+            
+            if (goal && goal >= 1000 && goal <= 50000) {
+                dailyGoal = goal;
+                document.getElementById('currentGoal').textContent = goal;
+                updateDisplay();
+                saveData();
+                input.value = '';
+            }
+        }
+
+        function updateDisplay() {
+            stepCount.textContent = currentSteps.toLocaleString();
+            
+            const progress = Math.min((currentSteps / dailyGoal) * 100, 100);
+            const circumference = 2 * Math.PI * 90;
+            const offset = circumference - (progress / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            progressText.textContent = Math.round(progress) + '%';
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            const calories = Math.round(currentSteps * 0.04);
+            document.getElementById('caloriesBurned').textContent = calories;
+            
+            const distance = (currentSteps * 0.0008).toFixed(2);
+            document.getElementById('distanceWalked').textContent = distance;
+            
+            const activeMinutes = Math.round(currentSteps / 100);
+            document.getElementById('activeMinutes').textContent = activeMinutes;
+            
+            const weeklyAvg = stepHistory.length > 0 
+                ? Math.round(stepHistory.slice(-7).reduce((sum, day) => sum + day.steps, 0) / Math.min(7, stepHistory.length))
+                : 0;
+            document.getElementById('weeklyAverage').textContent = weeklyAvg.toLocaleString();
+        }
+
+        function addToHistory() {
+            const today = new Date().toDateString();
+            stepHistory.push({
+                date: today,
+                steps: currentSteps,
+                goal: dailyGoal,
+                achieved: currentSteps >= dailyGoal
+            });
+            
+            if (stepHistory.length > 30) {
+                stepHistory = stepHistory.slice(-30);
+            }
+            
+            updateHistory();
+        }
+
+        function updateHistory() {
+            const container = document.getElementById('historyContainer');
+            
+            if (stepHistory.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Start tracking to see your history here!</div>';
+                return;
+            }
+            
+            container.innerHTML = stepHistory.slice(-10).reverse().map(day => `
+                <div class="history-item">
+                    <div>
+                        <strong>${new Date(day.date).toLocaleDateString()}</strong>
+                        ${day.achieved ? ' 🎯' : ''}
+                    </div>
+                    <div>
+                        <span style="font-size: 1.2rem; font-weight: bold; color: #4CAF50;">
+                            ${day.steps.toLocaleString()}
+                        </span>
+                        <span style="color: #666;"> / ${day.goal.toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function saveData() {
+            const data = {
+                currentSteps,
+                dailyGoal,
+                stepHistory,
+                lastSaved: new Date().toDateString()
+            };
+            localStorage.setItem('stepTracker', JSON.stringify(data));
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('stepTracker');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    const today = new Date().toDateString();
+                    
+                    if (data.lastSaved !== today && data.currentSteps > 0) {
+                        if (data.stepHistory) {
+                            stepHistory = data.stepHistory;
+                        }
+                        stepHistory.push({
+                            date: data.lastSaved,
+                            steps: data.currentSteps,
+                            goal: data.dailyGoal || 10000,
+                            achieved: data.currentSteps >= (data.dailyGoal || 10000)
+                        });
+                        currentSteps = 0;
+                    } else {
+                        currentSteps = data.currentSteps || 0;
+                        if (data.stepHistory) {
+                            stepHistory = data.stepHistory;
+                        }
+                    }
+                    
+                    dailyGoal = data.dailyGoal || 10000;
+                    document.getElementById('currentGoal').textContent = dailyGoal;
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        startAutoBtn.addEventListener('click', startAutoTracking);
+        stopAutoBtn.addEventListener('click', stopAutoTracking);
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && currentSteps > 0) {
+                saveData();
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (currentSteps > 0) {
+                saveData();
+            }
+        });
+    </script>
+</body>
+</html>
